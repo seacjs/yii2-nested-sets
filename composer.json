@@ -1,0 +1,21 @@
+{
+    "name": "seacjs/yii2-nested-sets",
+    "description": "Nested set extension for Yii2 Framework",
+    "type": "yii2-extension",
+    "keywords": ["yii2","extension","nested sets"],
+    "license": "Apache-2.0",
+    "authors": [
+        {
+            "name": "Sholeninov Evgeny",
+            "email": "sea-cjs@yandex.ru"
+        }
+    ],
+    "require": {
+        "yiisoft/yii2": "~2.0.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "seacjs\\nestedsets\\": ""
+        }
+    }
+}
