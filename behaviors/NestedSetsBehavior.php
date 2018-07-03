@@ -102,10 +102,10 @@ class NestedSetsBehavior extends Behavior
     }
 
     /* todo: insertBefore and insertAfter */
-    public function insertBefore(){
+    public function insertBefore() {
 
     }
-    public function insertAfter(){
+    public function insertAfter() {
 
     }
 

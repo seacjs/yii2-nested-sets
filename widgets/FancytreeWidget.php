@@ -11,6 +11,7 @@ use yii\helpers\Html;
 use yii\helpers\Json;
 use yii\helpers\VarDumper;
 use yii\web\JsExpression;
+use yii\web\View;
 
 /**
  * The yii2-fancytree-widget is a Yii 2 wrapper for the fancytree.js
@@ -24,6 +25,7 @@ class FancytreeWidget extends \yii\base\Widget
      * @var array
      */
     public $options = [];
+    public $url;
 
     /**
      * @inheritdoc
@@ -52,6 +54,7 @@ class FancytreeWidget extends \yii\base\Widget
             unset($this->options['id']);
         } else {
             if(in_array('table', $this->options['extensions'])) {
+                echo '<style>table.fancytree-ext-table tbody tr.fancytree-active {background-color: #eee;}</style>';
                 echo '<table id="'.$id.'"  class="table table-hover">
                     <colgroup>
                         <col width="30px"></col>
@@ -86,13 +89,21 @@ class FancytreeWidget extends \yii\base\Widget
                         'checkboxColumnIdx' => 0  // render the checkboxes into the 1st column
                     ];
                 }
+                /*todo: lol replace regexp 4 repetitions =) */
                 if(!array_key_exists('renderColumns', $this->options)) {
                     $this->options['renderColumns'] = new JsExpression('function(event, data) {
-                        var node = data.node,
+                        var node = data.node;
+                        var buttons = \'' . $this->generateActionButtons() . '\';
+
+                        buttons = buttons.replace("node.key", node.key);
+                        buttons = buttons.replace("node.key", node.key);
+                        buttons = buttons.replace("node.key", node.key);
+                        buttons = buttons.replace("node.key", node.key);
+
                         $tdList = $(node.tr).find(">td");
                         $tdList.eq(1).text(node.getIndexHier()).addClass("alignRight");
-                        $tdList.eq(3).text(node.key);
-                        $tdList.eq(4).html(\'' . $this->generateActionButtons() . '\');
+                        $tdList.eq(3).html(node.key);
+                        $tdList.eq(4).html(buttons);
                      }');
                 }
             } else {
@@ -100,39 +111,43 @@ class FancytreeWidget extends \yii\base\Widget
             }
         }
         $options = Json::encode($this->options);
-        $view->registerJs('$("#' . $id . '").fancytree( ' .$options .')');
+        $view->registerJs('$("#' . $id . '").fancytree( ' .$options .');');
+
+        $view->registerJs('$("#' . $id . ' tr").each(function(key, value){ console.log(value.find("td"))});');
+
     }
+
     public function generateActionButtons() {
 
-        $url = '"node.key"';
+        $url = "node.key";
 
         $add = Html::tag('span','',['class' => 'glyphicon glyphicon-plus']);
         $view = Html::tag('span','',['class' => 'glyphicon glyphicon-eye-open']);
         $update = Html::tag('span','',['class' => 'glyphicon glyphicon-pencil']);
         $delete = Html::tag('span','',['class' => 'glyphicon glyphicon-trash']);
 
-        return Html::a($add, $url,[
+        return Html::a($add, $this->url  . 'create/' . $url,[
                 'title' => 'add',
                 'role' => 'modal-remote',
                 'data' => [
                     'toggle' => 'tooltip'
                 ]
             ]) . '&nbsp;' .
-            Html::a($view, $url,[
+            Html::a($view, $this->url  . 'view/' . $url,[
                 'title' => 'view',
                 'role' => 'modal-remote',
                 'data' => [
                     'toggle' => 'tooltip'
                 ]
             ]) . '&nbsp;' .
-            Html::a($update, $url,[
+            Html::a($update, $this->url  . 'update/' . $url,[
                 'title' => 'update',
                 'role' => 'modal-remote',
                 'data' => [
                     'toggle' => 'tooltip'
                 ]
             ]) . '&nbsp;' .
-            Html::a($delete, $url,[
+            Html::a($delete, $this->url  . 'delete/' . $url,[
                 'title' => 'delete',
                 'role' => 'modal-remote',
                 'data' => [
@@ -146,3 +161,4 @@ class FancytreeWidget extends \yii\base\Widget
 
     }
 }
+
