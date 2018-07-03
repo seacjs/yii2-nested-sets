@@ -1,6 +1,7 @@
-Nested set extension for Yii2 Framework
+Nested set extension for Yii2 Framework v0.1
 =======================================
-Nested set extension for Yii2 Framework
+Nested set extension for Yii2 Framework v0.1
+
 
 Installation
 ------------
