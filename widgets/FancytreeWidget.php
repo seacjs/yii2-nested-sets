@@ -54,7 +54,7 @@ class FancytreeWidget extends \yii\base\Widget
             unset($this->options['id']);
         } else {
             if(in_array('table', $this->options['extensions'])) {
-                echo '<style>table.fancytree-ext-table tbody tr.fancytree-active {background-color: #eee;}</style>';
+                echo '<style>table.fancytree-ext-table tbody tr.fancytree-active {background-color: #eee;}table.fancytree-ext-table{text-align:left !important;}</style>';
                 echo '<table id="'.$id.'"  class="table table-hover">
                     <colgroup>
                         <col width="30px"></col>
@@ -153,9 +153,9 @@ class FancytreeWidget extends \yii\base\Widget
                 'data' => [
                     'pjax' => '0',
                     'toggle' => 'tooltip',
-                    'request-method' => 'post',
+                    'method' => 'post',
                     'confirm-title' => 'Are you sure?',
-                    'confirm-message' => 'Are you sure want to delete this item'
+                    'confirm' => 'Are you sure want to delete this item'
                 ]
             ]);
 

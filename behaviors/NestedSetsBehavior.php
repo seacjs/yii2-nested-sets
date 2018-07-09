@@ -11,6 +11,11 @@ namespace seacjs\nestedsets\behaviors;
 use yii\base\Behavior;
 use yii\helpers\VarDumper;
 
+/**
+ *
+ * @var $this->owner yii\db\ActiveRecord
+ *
+ * */
 class NestedSetsBehavior extends Behavior
 {
     /**
@@ -82,7 +87,7 @@ class NestedSetsBehavior extends Behavior
 
     public function prependToNode($parent)
     {
-
+        /* думаю что этот метод не нужен будет */
         $this->updateNodes([
             '>', $this->leftAttribute, $parent->{$this->leftAttribute}
         ], 2, 2, 0);
@@ -101,17 +106,80 @@ class NestedSetsBehavior extends Behavior
 
     }
 
-    /* todo: insertBefore and insertAfter */
-    public function insertBefore() {
+    /* todo: insertBefore and insertAfter
+    Можно сделать используя moveNodeTo а в этих функция просто сделать изменение порядка.
+     */
+    public function insertBefore($targetNode) {}
+    public function insertAfter($targetNode) {
+
+        $thisParentNodeId = $this->getParent() == null ? null : $this->getParent()->id;
+        $targetParentNodeId = $targetNode->getParent() == null ? null : $targetNode->getParent()->id;
+
+        if ($thisParentNodeId != $targetParentNodeId) {
+            $this->moveNodeTo($targetNode->getParent());
+        }
+        $this->changeOrder($targetNode);
+    }
+
+    /**
+     * Change nodes orders
+     */
+    public function changeOrder($targetNode) {
+
+        $left_key = $this->owner->{$this->leftAttribute};
+        $right_key = $this->owner->{$this->rightAttribute};
+
+        $left_key_near = $targetNode->{$this->leftAttribute};
+        $right_key_near = $targetNode->{$this->rightAttribute};
+
+        if($right_key < $right_key_near) {
+            /* двигаем вверх */
+
+            $shiftUp = $left_key_near - $left_key;
+            $shiftDown = $right_key - $left_key + 1;
+
+            $moveDown = $this->owner->find()->andWhere([
+                'and',
+                ['>', $this->rightAttribute, $right_key],
+                ['<', $this->leftAttribute, $right_key_near]
+            ])->all();
+
+            $moveUp = $this->owner->find()->andWhere([
+                'and',
+                ['>=', $this->leftAttribute, $left_key],
+                ['<=', $this->rightAttribute, $right_key]
+            ])->all();
+
+            foreach($moveDown as $item) {
+                $item->{$this->leftAttribute} -= $shiftDown;
+                $item->{$this->rightAttribute} -= $shiftDown;
+                $item->save();
+            }
+            foreach($moveUp as $item) {
+                $item->{$this->leftAttribute} += $shiftUp;
+                $item->{$this->rightAttribute} += $shiftUp;
+                $item->save();
+            }
+
+        } else {
+            /* двигаем вниз */
+        }
+
 
     }
-    public function insertAfter() {
-
-    }
-
+    /**
+     * Delete node and his children
+     */
     public function removeNode()
     {
+
         $shift = -($this->owner->{$this->rightAttribute} - $this->owner->{$this->leftAttribute} + 1);
+
+        $this->owner->deleteAll([
+            'and',
+            ['>=', $this->leftAttribute, $this->owner->{$this->leftAttribute}],
+            ['<=', $this->rightAttribute, $this->owner->{$this->rightAttribute}]
+        ]);
 
         $this->updateNodes([
             'and',
@@ -123,14 +191,11 @@ class NestedSetsBehavior extends Behavior
             '>', $this->leftAttribute, $this->owner->{$this->rightAttribute}
         ], $shift, $shift,0);
 
-        $this->owner->deleteAll([
-            'and',
-            ['>=', $this->leftAttribute, $this->owner->{$this->leftAttribute}],
-            ['<=', $this->rightAttribute, $this->owner->{$this->rightAttribute}]
-        ]);
-
     }
-
+    /**
+     * Move nod to new position with new parent $newParentNode
+     * @param $newParentNode object
+     */
     public function moveNodeTo($newParentNode = null)
     {
         $left_key = $this->owner->{$this->leftAttribute};
@@ -147,7 +212,7 @@ class NestedSetsBehavior extends Behavior
 //            SELECT right_key FROM my_tree WHERE level = $level
 //            $right_key_near = 0;
 //        }
-        else if($this->getParent()->id == $newParentNode->id) {
+        else if($this->getParent() != null && $this->getParent()->id == $newParentNode->id) {
 //          При изменении порядка, когда родительский узел не меняется – правый ключ узла за которым будет стоять перемещаемый;
 //          SELECT left_key, right_key FROM my_tree WHERE id = [id соседнего узла с который будет(!) выше (левее)]****
             $right_key_near = 0;
@@ -155,7 +220,6 @@ class NestedSetsBehavior extends Behavior
 //            При простом перемещении в другой узел;
 //            SELECT (right_key – 1) AS right_key FROM my_tree WHERE id = [id нового родительского узла]
             $right_key_near = $newParentNode->{$this->rightAttribute} - 1;
-
         }
 
         $skew_tree = $right_key - $left_key + 1;
@@ -168,7 +232,7 @@ class NestedSetsBehavior extends Behavior
         ])->all();
 
         if($right_key > $right_key_near) {
-
+/* here */
             $skew_edit = $right_key_near - $left_key + 1;
 
             $this->updateNodes([
@@ -181,6 +245,7 @@ class NestedSetsBehavior extends Behavior
                 ['<', $this->leftAttribute, $left_key],
                 ['>', $this->leftAttribute, $right_key_near]
             ], $skew_tree, 0, 0);
+
         } else {
 
             $skew_edit = $right_key_near - $left_key + 1 - $skew_tree;
@@ -193,8 +258,8 @@ class NestedSetsBehavior extends Behavior
 
             $this->updateNodes([
                 'and',
-                ['<', $this->leftAttribute, $left_key],
-                ['>', $this->leftAttribute, $right_key_near],
+                ['<', $this->leftAttribute, $right_key_near+1],
+                ['>', $this->leftAttribute, $right_key],
             ], -$skew_tree, 0, 0);
         }
 

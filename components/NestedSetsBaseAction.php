@@ -13,18 +13,19 @@ use yii\web\Response;
 class NestedSetsBaseAction extends Action
 {
     public $modelClassName;
-    private $_model;
-    private $_modelNear;
-    private $_post;
+    protected $_model;
+    protected $_modelNear;
+    protected $_post;
 
     public function beforeRun()
     {
         if (parent::beforeRun()) {
             Yii::$app->response->format = Response::FORMAT_JSON;
+            $request = Yii::$app->request;
             $this->_post = Yii::$app->request->post();
-            if(Yii::$app->request->isAjax && $this->_post){
-                $this->_model = (new $this->modelClassName())->findOne($this->_post['id']);
-                $this->_modelNear = (new $this->modelClassName())->findOne($this->_post['id_near']);
+            if($request->isAjax && $request->isPost){
+                $this->_model = (new $this->modelClassName())->findOne(['id' => $this->_post['id']]);
+                $this->_modelNear = (new $this->modelClassName())->findOne(['id' => $this->_post['id_near']]);
                 if($this->_model != null && $this->_modelNear != null) {
                     return true;
                 }
